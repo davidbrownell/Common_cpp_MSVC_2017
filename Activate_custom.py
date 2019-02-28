@@ -52,7 +52,72 @@ def GetCustomActions(
     cases, this is Bash on Linux systems and Batch or PowerShell on Windows systems.
     """
 
-    return []
+    actions = []
+
+    # Verify the installed content
+    if fast:
+        actions.append(
+            CurrentShell.Commands.Message(
+                "** FAST: Activating without verifying content. ({})".format(_script_fullpath),
+            ),
+        )
+    else:
+        for tool, version_infos in [("MSVC", [("v15.9.7", [("Windows", "5B098201BA02B6011089ED54EEED06B80F382DBA85139BA560B9DF1309E840F6")])])]:
+            for version, operating_system_infos in version_infos:
+                for operating_system, hash in operating_system_infos:
+                    if CurrentShell.CategoryName != operating_system:
+                        continue
+
+                    tool_dir = os.path.join(_script_dir, "Tools", tool, version, operating_system)
+                    assert os.path.isdir(tool_dir), tool_dir
+
+                    actions.append(
+                        CurrentShell.Commands.Call(
+                            'python "{script}" Verify "{tool} - {version}" "{dir}" {hash}'.format(
+                                script=os.path.join(
+                                    os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL"),
+                                    "RepositoryBootstrap",
+                                    "SetupAndActivate",
+                                    "AcquireBinaries.py",
+                                ),
+                                tool=tool,
+                                version=version,
+                                dir=tool_dir,
+                                hash=hash,
+                            ),
+                        ),
+                    )
+
+            actions.append(CurrentShell.Commands.Message(""))
+
+    # Initialize the environment
+    if fast:
+        actions.append(
+            CurrentShell.Commands.Message(
+                "** FAST: Activating without initializing MSVC. ({})".format(_script_fullpath),
+            ),
+        )
+    else:
+        # This will need to be updated if we support multiple versions
+        vcvarsall_filename = os.path.join(
+            _script_dir,
+            "Tools",
+            "MSVC",
+            "v15.9.7",
+            "Windows",
+            "VC",
+            "Auxiliary",
+            "Build",
+            "vcvarsall.bat",
+        )
+        assert os.path.isfile(vcvarsall_filename), vcvarsall_filename
+
+        actions += [
+            CurrentShell.Commands.Call('"{}" {}'.format(vcvarsall_filename, configuration)),
+            CurrentShell.Commands.Message(""),
+        ]
+
+    return actions
 
 
 # ----------------------------------------------------------------------

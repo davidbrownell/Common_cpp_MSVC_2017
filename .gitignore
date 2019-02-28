@@ -9,3 +9,5 @@ Activate.sh
 
 .coverage
 coverage.xml
+
+Tools/MSVC/v15.9.7/Windows/*

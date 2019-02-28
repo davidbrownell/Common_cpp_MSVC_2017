@@ -142,4 +142,48 @@ def GetCustomActions(debug, verbose, explicit_configurations):
     cases, this is Bash on Linux systems and Batch or PowerShell on Windows systems.
     """
 
-    return []
+    actions = []
+
+    for tool, version_infos in [("MSVC", [("v15.9.7", [("Windows", "5B098201BA02B6011089ED54EEED06B80F382DBA85139BA560B9DF1309E840F6")])])]:
+        for version, operating_system_infos in version_infos:
+            for operating_system, hash in operating_system_infos:
+                if CurrentShell.CategoryName != operating_system:
+                    continue
+
+                tool_dir = os.path.join(_script_dir, "Tools", tool, version, operating_system)
+                assert os.path.isdir(tool_dir), tool_dir
+
+                install_filename = os.path.join(tool_dir, "Install.7z")
+                if not os.path.isfile(install_filename):
+                    actions += [
+                        CurrentShell.Commands.Execute(
+                            '7za x "{input}" "-o{output}"'.format(
+                                input=os.path.join(tool_dir, "_Install.7z.001"),
+                                output=tool_dir,
+                            ),
+                        ),
+                        CurrentShell.Commands.Message(""),
+                    ]
+
+                actions += [
+                    CurrentShell.Commands.Call(
+                        'python "{script}" Install "{tool} - {version}" "{uri}" "{dir}" {hash}'.format(
+                            script=os.path.join(
+                                os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL"),
+                                "RepositoryBootstrap",
+                                "SetupAndActivate",
+                                "AcquireBinaries.py",
+                            ),
+                            tool=tool,
+                            version=version,
+                            uri=CommonEnvironmentImports.FileSystem.FilenameToUri(
+                                install_filename,
+                            ),
+                            dir=tool_dir,
+                            hash=hash,
+                        ),
+                    ),
+                    CurrentShell.Commands.Delete(install_filename),
+                ]
+
+    return actions

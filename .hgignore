@@ -12,4 +12,5 @@ Activate.sh
 .coverage
 coverage.xml
 
+Libraries/Windows Kits/10/*
 Tools/MSVC/v15.9.7/Windows/*

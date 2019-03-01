@@ -52,6 +52,8 @@ from RepositoryBootstrap.SetupAndActivate.Configuration import *            # <U
 
 del sys.path[0]
 
+from _custom_data import _CUSTOM_DATA
+
 # ----------------------------------------------------------------------
 # There are two types of repositories: Standard and Mixin. Only one standard
 # repository may be activated within an environment at a time while any number
@@ -142,4 +144,57 @@ def GetCustomActions(debug, verbose, explicit_configurations):
     cases, this is Bash on Linux systems and Batch or PowerShell on Windows systems.
     """
 
-    return []
+    if CurrentShell.CategoryName != "Windows":
+        return []
+        
+    actions = []
+
+    for name, version, path_parts in _CUSTOM_DATA:
+        this_dir = os.path.join(*([_script_dir] + path_parts))
+        assert os.path.isdir(this_dir), this_dir
+
+        install_filename = os.path.join(this_dir, "Install.7z")
+
+        # Reconstruct the binary
+        if not os.path.isfile(install_filename):
+            actions += [
+                CurrentShell.Commands.Execute(
+                    'python "{script}" Reconstruct "{filename}"'.format(
+                        script=os.path.join(
+                            os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL"),
+                            "RepositoryBootstrap",
+                            "SetupAndActivate",
+                            "LargeFileSupport.py",
+                        ),
+                        filename=os.path.join(this_dir, "_Install.7z.001"),
+                    ),
+                ),
+                CurrentShell.Commands.ExitOnError(),
+            ]
+
+        # Install the file
+        actions += [
+            CurrentShell.Commands.Execute(
+                'python "{script}" Install "{name}" "{uri}" "{dir}" "{version}"'.format(
+                    script=os.path.join(
+                        os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL"),
+                        "RepositoryBootstrap",
+                        "SetupAndActivate",
+                        "AcquireBinaries.py",
+                    ),
+                    name=name,
+                    uri=CommonEnvironmentImports.FileSystem.FilenameToUri(
+                        install_filename,
+                    ).replace("%", "%%"),
+                    dir=this_dir,
+                    version=version,
+                ),
+            ),
+            CurrentShell.Commands.PersistError("_setup_error"),
+            CurrentShell.Commands.Delete(install_filename),
+            CurrentShell.Commands.ExitOnError(
+                variable_name="_setup_error",
+            ),
+        ]
+
+    return actions

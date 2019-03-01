@@ -19,6 +19,7 @@ import sys
 
 sys.path.insert(0, os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL"))
 from RepositoryBootstrap.SetupAndActivate import CommonEnvironment, CurrentShell
+from RepositoryBootstrap.Impl.ActivationActivity import ActivationActivity
 
 del sys.path[0]
 
@@ -26,6 +27,8 @@ del sys.path[0]
 _script_fullpath                            = CommonEnvironment.ThisFullpath()
 _script_dir, _script_name                   = os.path.split(_script_fullpath)
 # ----------------------------------------------------------------------
+
+from _custom_data import _CUSTOM_DATA
 
 # <Class '<name>' has no '<attr>' member> pylint: disable = E1101
 # <Unrearchable code> pylint: disable = W0101
@@ -52,7 +55,123 @@ def GetCustomActions(
     cases, this is Bash on Linux systems and Batch or PowerShell on Windows systems.
     """
 
-    return []
+    if CurrentShell.CategoryName != "Windows":
+        return []
+        
+    actions = []
+
+    # Verify the installed content
+    if fast:
+        actions.append(
+            CurrentShell.Commands.Message(
+                "** FAST: Activating without verifying content. ({})".format(_script_fullpath),
+            ),
+        )
+    else:
+        for name, version, path_parts in _CUSTOM_DATA:
+            this_dir = os.path.join(*([_script_dir] + path_parts))
+            assert os.path.isdir(this_dir), this_dir
+
+            actions += [
+                CurrentShell.Commands.Execute(
+                    'python "{script}" Verify "{name}" "{dir}" "{version}"'.format(
+                        script=os.path.join(
+                            os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL"),
+                            "RepositoryBootstrap",
+                            "SetupAndActivate",
+                            "AcquireBinaries.py",
+                        ),
+                        name=name,
+                        dir=this_dir,
+                        version=version,
+                    ),
+                ),
+                CurrentShell.Commands.Message(""),
+            ]
+
+    # Initialize the environment
+    if fast:
+        actions.append(
+            CurrentShell.Commands.Message(
+                "** FAST: Activating without initializing MSVC. ({})".format(_script_fullpath),
+            ),
+        )
+    else:
+        # Add the Windows Kit
+        windows_kit_dir = os.path.join(_script_dir, "Libraries", "Windows Kits", "10")
+        assert os.path.isdir(windows_kit_dir), windows_kit_dir
+
+        actions.append(
+            CurrentShell.Commands.Set("_VS_BUILD_TOOLS_WINDOWS_KIT_DIR", windows_kit_dir),
+        )
+
+        # Add the compiler tools
+        msvc_dir = ActivationActivity.GetVersionedDirectory(
+            version_specs.Tools,
+            _script_dir,
+            "Tools",
+            "MSVC",
+        )
+        assert os.path.isdir(msvc_dir), msvc_dir
+
+        vcvarsall_filename = os.path.join(msvc_dir, "VC", "Auxiliary", "Build", "vcvarsall.bat")
+        assert os.path.isfile(vcvarsall_filename), vcvarsall_filename
+
+        actions += [
+            CurrentShell.Commands.Call('"{}" {}'.format(vcvarsall_filename, configuration)),
+            CurrentShell.Commands.Message(""),
+        ]
+
+        # Add the windows kit binaries
+        windows_kit_bin_dir = ActivationActivity.GetVersionedDirectory(
+            version_specs.Libraries,
+            windows_kit_dir,
+            "bin",
+        )
+        assert os.path.isdir(windows_kit_dir), windows_kit_dir
+
+        windows_kit_bin_dir = os.path.join(windows_kit_bin_dir, configuration)
+        assert os.path.isdir(windows_kit_dir), windows_kit_dir
+
+        actions.append(CurrentShell.Commands.AugmentPath(windows_kit_bin_dir))
+
+        # Add the windows kit libs
+        windows_kit_lib_dir = ActivationActivity.GetVersionedDirectory(
+            version_specs.Libraries,
+            windows_kit_dir,
+            "Lib",
+        )
+        assert os.path.isdir(windows_kit_lib_dir), windows_kit_lib_dir
+
+        new_libs = []
+        
+        for lib_name in ["ucrt", "ucrt_enclave", "um"]:
+            this_lib_dir = os.path.join(windows_kit_lib_dir, lib_name, configuration)
+            if os.path.isdir(this_lib_dir):
+                new_libs.append(this_lib_dir)
+
+        if new_libs:
+            actions.append(CurrentShell.Commands.Augment("LIB", new_libs))
+
+        # Add the windows kit includes
+        windows_kit_include_dir = ActivationActivity.GetVersionedDirectory(
+            version_specs.Libraries,
+            windows_kit_dir,
+            "Include",
+        )
+        assert os.path.isdir(windows_kit_include_dir), windows_kit_include_dir
+
+        new_includes = []
+
+        for include_name in ["ucrt", "um"]:
+            this_include_dir = os.path.join(windows_kit_include_dir, include_name)
+            if os.path.isdir(this_include_dir):
+                new_includes.append(this_include_dir)
+
+        if new_includes:
+            actions.append(CurrentShell.Commands.Augment("INCLUDE", new_includes))
+
+    return actions
 
 
 # ----------------------------------------------------------------------

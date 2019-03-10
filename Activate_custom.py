@@ -171,6 +171,12 @@ def GetCustomActions(
         if new_includes:
             actions.append(CurrentShell.Commands.Augment("INCLUDE", new_includes))
 
+    # Set the compiler
+    actions += [
+        CurrentShell.Commands.Set("CXX", "cl"),
+        CurrentShell.Commands.Set("CC", "cl"),
+    ]
+
     return actions
 
 

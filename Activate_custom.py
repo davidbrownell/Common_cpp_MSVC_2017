@@ -28,6 +28,9 @@ _script_fullpath                            = CommonEnvironment.ThisFullpath()
 _script_dir, _script_name                   = os.path.split(_script_fullpath)
 # ----------------------------------------------------------------------
 
+# Ensure that we are loading custom data from this dir and not some other repository.
+sys.modules.pop("_custom_data", None)
+
 from _custom_data import _CUSTOM_DATA
 
 # <Class '<name>' has no '<attr>' member> pylint: disable = E1101
@@ -170,6 +173,12 @@ def GetCustomActions(
 
         if new_includes:
             actions.append(CurrentShell.Commands.Augment("INCLUDE", new_includes))
+
+    # Set the compiler
+    actions += [
+        CurrentShell.Commands.Set("CXX", "cl"),
+        CurrentShell.Commands.Set("CC", "cl"),
+    ]
 
     return actions
 

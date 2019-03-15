@@ -42,7 +42,7 @@ _script_dir, _script_name                   = os.path.split(_script_fullpath)
 # <Wildcard import> pylint: disable = W0401
 # <Unused argument> pylint: disable = W0613
 
-fundamental_repo                                                            = os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL")
+fundamental_repo                            = os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL")
 assert os.path.isdir(fundamental_repo), fundamental_repo
 
 sys.path.insert(0, fundamental_repo)
@@ -146,7 +146,7 @@ def GetCustomActions(debug, verbose, explicit_configurations):
 
     if CurrentShell.CategoryName != "Windows":
         return []
-        
+
     actions = []
 
     for name, version, path_parts in _CUSTOM_DATA:
@@ -183,9 +183,10 @@ def GetCustomActions(debug, verbose, explicit_configurations):
                         "AcquireBinaries.py",
                     ),
                     name=name,
-                    uri=CommonEnvironmentImports.FileSystem.FilenameToUri(
-                        install_filename,
-                    ).replace("%", "%%"),
+                    uri=CommonEnvironmentImports.FileSystem.FilenameToUri(install_filename).replace(
+                        "%",
+                        "%%",
+                    ),
                     dir=this_dir,
                     version=version,
                 ),

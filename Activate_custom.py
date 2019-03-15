@@ -60,7 +60,7 @@ def GetCustomActions(
 
     if CurrentShell.CategoryName != "Windows":
         return []
-        
+
     actions = []
 
     # Verify the installed content
@@ -120,10 +120,7 @@ def GetCustomActions(
         vcvarsall_filename = os.path.join(msvc_dir, "VC", "Auxiliary", "Build", "vcvarsall.bat")
         assert os.path.isfile(vcvarsall_filename), vcvarsall_filename
 
-        actions += [
-            CurrentShell.Commands.Call('"{}" {}'.format(vcvarsall_filename, configuration)),
-            CurrentShell.Commands.Message(""),
-        ]
+        actions += [CurrentShell.Commands.Call('"{}" {}'.format(vcvarsall_filename, configuration)), CurrentShell.Commands.Message("")]
 
         # Add the windows kit binaries
         windows_kit_bin_dir = ActivationActivity.GetVersionedDirectory(
@@ -147,7 +144,7 @@ def GetCustomActions(
         assert os.path.isdir(windows_kit_lib_dir), windows_kit_lib_dir
 
         new_libs = []
-        
+
         for lib_name in ["ucrt", "ucrt_enclave", "um"]:
             this_lib_dir = os.path.join(windows_kit_lib_dir, lib_name, configuration)
             if os.path.isdir(this_lib_dir):
@@ -175,10 +172,7 @@ def GetCustomActions(
             actions.append(CurrentShell.Commands.Augment("INCLUDE", new_includes))
 
     # Set the compiler
-    actions += [
-        CurrentShell.Commands.Set("CXX", "cl"),
-        CurrentShell.Commands.Set("CC", "cl"),
-    ]
+    actions += [CurrentShell.Commands.Set("CXX", "cl"), CurrentShell.Commands.Set("CC", "cl")]
 
     return actions
 

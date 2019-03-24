@@ -105,12 +105,11 @@ def GetDependencies():
                     "x64",
                     [
                         Dependency(
-                            "F33C43DA6BB54336A7573B39509CDAD7",                       # Id for Common_Environment; found in <Common_Environment>/__RepositoryId__
-                            "Common_cpp_Common",                                      # Name used if Common_Environment cannot be found during setup
-                            "x64",                                                    # Configuration value used when activating Common_Environment (can be None or skipped for repos that only support a single configuration)
-                            "https://github.com/davidbrownell/Common_cpp_Common.git", # Uri for repo; can be string or def Func(scm_or_none) -> string
+                            "67695C1E2C944596AD8390700FAD3E06",
+                            "Common_cpp_Clang_7",
+                            "x64",
+                            "https://github.com/davidbrownell/Common_cpp_Clang_7.git",
                         ),
-                                                                                      # Other dependencies go here (if any)
                     ],
                 ),
             ),
@@ -120,12 +119,11 @@ def GetDependencies():
                     "x86",
                     [
                         Dependency(
-                            "F33C43DA6BB54336A7573B39509CDAD7",                       # Id for Common_Environment; found in <Common_Environment>/__RepositoryId__
-                            "Common_cpp_Common",                                      # Name used if Common_Environment cannot be found during setup
-                            "x64",                                                    # Configuration value used when activating Common_Environment (can be None or skipped for repos that only support a single configuration)
-                            "https://github.com/davidbrownell/Common_cpp_Common.git", # Uri for repo; can be string or def Func(scm_or_none) -> string
+                            "67695C1E2C944596AD8390700FAD3E06",
+                            "Common_cpp_Clang_7",
+                            "x64",
+                            "https://github.com/davidbrownell/Common_cpp_Clang_7.git",
                         ),
-                                                                                      # Other dependencies go here (if any)
                     ],
                 ),
             ),

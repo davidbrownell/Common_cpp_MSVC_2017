@@ -163,13 +163,51 @@ def GetCustomActions(
 
         new_includes = []
 
-        for include_name in ["ucrt", "um"]:
+        for include_name in ["shared", "ucrt", "um"]:
             this_include_dir = os.path.join(windows_kit_include_dir, include_name)
             if os.path.isdir(this_include_dir):
                 new_includes.append(this_include_dir)
 
         if new_includes:
             actions.append(CurrentShell.Commands.Augment("INCLUDE", new_includes))
+
+        # Add the windows kit binaries
+        windows_kit_bin_dir = ActivationActivity.GetVersionedDirectory(
+            version_specs.Libraries,
+            windows_kit_dir,
+            "bin",
+        )
+        assert os.path.isdir(windows_kit_bin_dir), windows_kit_bin_dir
+
+        windows_kit_bin_dir = os.path.join(
+            windows_kit_bin_dir,
+            os.getenv("DEVELOPMENT_ENVIRONMENT_CPP_ARCHITECTURE"),
+            "ucrt",
+        )
+        assert os.path.isdir(windows_kit_bin_dir), windows_kit_bin_dir
+
+        actions.append(CurrentShell.Commands.AugmentPath(windows_kit_bin_dir))
+
+        # Add the debug CRT to the path since it isn't there by default
+        msvc_version = os.path.dirname(msvc_dir) # Remove the OS
+        msvc_version = os.path.basename(msvc_version)
+
+        if msvc_version == "v15.9.7":
+            debug_crt_dir = os.path.join(
+                msvc_dir,
+                "VC",
+                "Redist",
+                "MSVC",
+                "14.16.27012",
+                "debug_nonredist",
+                os.getenv("DEVELOPMENT_ENVIRONMENT_CPP_ARCHITECTURE"),
+                "Microsoft.VC141.DebugCRT",
+            )
+            assert os.path.isdir(debug_crt_dir), debug_crt_dir
+
+            actions.append(CurrentShell.Commands.AugmentPath(debug_crt_dir))
+        else:
+            assert False, msvc_version
 
     # Set the compiler
     actions += [CurrentShell.Commands.Set("CXX", "cl"), CurrentShell.Commands.Set("CC", "cl")]

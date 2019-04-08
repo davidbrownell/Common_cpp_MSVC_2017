@@ -96,39 +96,31 @@ def GetDependencies():
     (aka is configurable) or a single Configuration if not.
     """
 
-    # To support multiple configurations...
-    return OrderedDict(
-        [
-            (
-                "x64",
-                Configuration(
-                    "x64",
-                    [
-                        Dependency(
-                            "67695C1E2C944596AD8390700FAD3E06",
-                            "Common_cpp_Clang_7",
-                            "x64",
-                            "https://github.com/davidbrownell/Common_cpp_Clang_7.git",
-                        ),
-                    ],
+    d = OrderedDict()
+
+    configuration_types = [("", "x64"), ("", "x86")]
+
+    if CurrentShell.CategoryName == "Windows":
+        # Add clang configurations (this will be in support of clang-cl (where clang
+        # impersonates MSVC))
+        configuration_types += [("Clang-", "x64"), ("Clang-", "x86")]
+
+    for name_prefix, architecture in configuration_types:
+        key = "{}{}".format(name_prefix, architecture)
+
+        d[key] = Configuration(
+            key,
+            [
+                Dependency(
+                    "67695C1E2C944596AD8390700FAD3E06",
+                    "Common_cpp_Clang_7",
+                    architecture,
+                    "https://github.com/davidbrownell/Common_cpp_Clang_7.git",
                 ),
-            ),
-            (
-                "x86",
-                Configuration(
-                    "x86",
-                    [
-                        Dependency(
-                            "67695C1E2C944596AD8390700FAD3E06",
-                            "Common_cpp_Clang_7",
-                            "x64",
-                            "https://github.com/davidbrownell/Common_cpp_Clang_7.git",
-                        ),
-                    ],
-                ),
-            ),
-        ],
-    )
+            ],
+        )
+
+    return d
 
 
 # ----------------------------------------------------------------------

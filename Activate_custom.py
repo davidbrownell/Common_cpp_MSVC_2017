@@ -61,6 +61,12 @@ def GetCustomActions(
     if CurrentShell.CategoryName != "Windows":
         return []
 
+    if configuration.startswith("Clang-"):
+        is_clang = True
+        configuration = configuration[len("Clang-"):]
+    else:
+        is_clang = False
+
     actions = []
 
     # Verify the installed content
@@ -210,7 +216,12 @@ def GetCustomActions(
             assert False, msvc_version
 
     # Set the compiler
-    actions += [CurrentShell.Commands.Set("CXX", "cl"), CurrentShell.Commands.Set("CC", "cl")]
+    if is_clang:
+        compiler = "clang-cl"
+    else:
+        compiler = "cl"
+
+    actions += [CurrentShell.Commands.Set("CXX", compiler), CurrentShell.Commands.Set("CC", compiler)]
 
     return actions
 

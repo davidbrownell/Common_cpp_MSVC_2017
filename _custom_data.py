@@ -35,5 +35,4 @@ _CUSTOM_DATA                                = [
             "Windows",
         ],
     ),
-    ("Windows Kits - 10.0.17763.0", "4148B22C5C910A97630327DD4DF54CD29EDBFDE190C44E559816FE5A963670D4", ["Libraries", "Windows Kits", "10"]),
 ]

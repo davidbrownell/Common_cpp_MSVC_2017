@@ -77,6 +77,7 @@ def GetCustomActions(
             ),
         )
     else:
+        # Verify installations
         for name, version, path_parts in _CUSTOM_DATA:
             this_dir = os.path.join(*([_script_dir] + path_parts))
             assert os.path.isdir(this_dir), this_dir
@@ -98,21 +99,7 @@ def GetCustomActions(
                 CurrentShell.Commands.Message(""),
             ]
 
-    # Initialize the environment
-    if fast:
-        actions.append(
-            CurrentShell.Commands.Message(
-                "** FAST: Activating without initializing MSVC. ({})".format(_script_fullpath),
-            ),
-        )
-    else:
-        # Add the Windows Kit
-        windows_kit_dir = os.path.join(_script_dir, "Libraries", "Windows Kits", "10")
-        assert os.path.isdir(windows_kit_dir), windows_kit_dir
-
-        actions.append(
-            CurrentShell.Commands.Set("_VS_BUILD_TOOLS_WINDOWS_KIT_DIR", windows_kit_dir),
-        )
+        # Initialize the environment
 
         # Add the compiler tools
         msvc_dir = ActivationActivity.GetVersionedDirectory(
@@ -127,72 +114,6 @@ def GetCustomActions(
         assert os.path.isfile(vcvarsall_filename), vcvarsall_filename
 
         actions += [CurrentShell.Commands.Call('"{}" {}'.format(vcvarsall_filename, configuration)), CurrentShell.Commands.Message("")]
-
-        # Add the windows kit binaries
-        windows_kit_bin_dir = ActivationActivity.GetVersionedDirectory(
-            version_specs.Libraries,
-            windows_kit_dir,
-            "bin",
-        )
-        assert os.path.isdir(windows_kit_dir), windows_kit_dir
-
-        windows_kit_bin_dir = os.path.join(windows_kit_bin_dir, configuration)
-        assert os.path.isdir(windows_kit_dir), windows_kit_dir
-
-        actions.append(CurrentShell.Commands.AugmentPath(windows_kit_bin_dir))
-
-        # Add the windows kit libs
-        windows_kit_lib_dir = ActivationActivity.GetVersionedDirectory(
-            version_specs.Libraries,
-            windows_kit_dir,
-            "Lib",
-        )
-        assert os.path.isdir(windows_kit_lib_dir), windows_kit_lib_dir
-
-        new_libs = []
-
-        for lib_name in ["ucrt", "ucrt_enclave", "um"]:
-            this_lib_dir = os.path.join(windows_kit_lib_dir, lib_name, configuration)
-            if os.path.isdir(this_lib_dir):
-                new_libs.append(this_lib_dir)
-
-        if new_libs:
-            actions.append(CurrentShell.Commands.Augment("LIB", new_libs))
-
-        # Add the windows kit includes
-        windows_kit_include_dir = ActivationActivity.GetVersionedDirectory(
-            version_specs.Libraries,
-            windows_kit_dir,
-            "Include",
-        )
-        assert os.path.isdir(windows_kit_include_dir), windows_kit_include_dir
-
-        new_includes = []
-
-        for include_name in ["shared", "ucrt", "um"]:
-            this_include_dir = os.path.join(windows_kit_include_dir, include_name)
-            if os.path.isdir(this_include_dir):
-                new_includes.append(this_include_dir)
-
-        if new_includes:
-            actions.append(CurrentShell.Commands.Augment("INCLUDE", new_includes))
-
-        # Add the windows kit binaries
-        windows_kit_bin_dir = ActivationActivity.GetVersionedDirectory(
-            version_specs.Libraries,
-            windows_kit_dir,
-            "bin",
-        )
-        assert os.path.isdir(windows_kit_bin_dir), windows_kit_bin_dir
-
-        windows_kit_bin_dir = os.path.join(
-            windows_kit_bin_dir,
-            os.getenv("DEVELOPMENT_ENVIRONMENT_CPP_ARCHITECTURE"),
-            "ucrt",
-        )
-        assert os.path.isdir(windows_kit_bin_dir), windows_kit_bin_dir
-
-        actions.append(CurrentShell.Commands.AugmentPath(windows_kit_bin_dir))
 
         # Add the debug CRT to the path since it isn't there by default
         msvc_version = os.path.dirname(msvc_dir) # Remove the OS

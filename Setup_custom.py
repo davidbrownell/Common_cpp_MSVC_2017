@@ -112,6 +112,12 @@ def GetDependencies():
             key,
             [
                 Dependency(
+                    "1DE864025F92429BB9855594DBA732B3",
+                    "Common_cpp_MSVC_WindowsKits_10",
+                    architecture,
+                    "https://github.com/davidbrownell/Common_cpp_MSVC_WindowsKits_10.git",
+                ),
+                Dependency(
                     "67695C1E2C944596AD8390700FAD3E06",
                     "Common_cpp_Clang_7",
                     architecture,

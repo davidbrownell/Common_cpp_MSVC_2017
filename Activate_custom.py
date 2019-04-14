@@ -127,7 +127,7 @@ def GetCustomActions(
                 "MSVC",
                 "14.16.27012",
                 "debug_nonredist",
-                os.getenv("DEVELOPMENT_ENVIRONMENT_CPP_ARCHITECTURE"),
+                configuration,
                 "Microsoft.VC141.DebugCRT",
             )
             assert os.path.isdir(debug_crt_dir), debug_crt_dir

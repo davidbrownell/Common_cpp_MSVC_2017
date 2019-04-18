@@ -58,12 +58,12 @@ def GetCustomActions(
     cases, this is Bash on Linux systems and Batch or PowerShell on Windows systems.
     """
 
-    if CurrentShell.CategoryName != "Windows":
+    if configuration == "Noop":
         return []
 
     if configuration.startswith("Clang-"):
         is_clang = True
-        configuration = configuration[len("Clang-"):]
+        configuration = configuration[len("Clang-") :]
     else:
         is_clang = False
 
@@ -116,7 +116,7 @@ def GetCustomActions(
         actions += [CurrentShell.Commands.Call('"{}" {}'.format(vcvarsall_filename, configuration)), CurrentShell.Commands.Message("")]
 
         # Add the debug CRT to the path since it isn't there by default
-        msvc_version = os.path.dirname(msvc_dir) # Remove the OS
+        msvc_version = os.path.dirname(msvc_dir)        # Remove the OS
         msvc_version = os.path.basename(msvc_version)
 
         if msvc_version == "v15.9.7":

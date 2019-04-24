@@ -61,12 +61,6 @@ def GetCustomActions(
     if configuration == "Noop":
         return []
 
-    if configuration.startswith("Clang-"):
-        is_clang = True
-        configuration = configuration[len("Clang-") :]
-    else:
-        is_clang = False
-
     actions = []
 
     # Verify the installed content
@@ -100,7 +94,11 @@ def GetCustomActions(
             ]
 
         # Initialize the environment
-        actions.append(CurrentShell.Commands.Set("DEVELOPMENT_ENVIRONMENT_CPP_COMPILER_NAME", "MSVC"))
+        actions += [
+            CurrentShell.Commands.Set("DEVELOPMENT_ENVIRONMENT_CPP_COMPILER_NAME", "MSVC-2017"),
+            CurrentShell.Commands.Set("CXX", "cl"),
+            CurrentShell.Commands.Set("CC", "cl"),
+        ]
 
         # Add the compiler tools
         msvc_dir = ActivationActivity.GetVersionedDirectory(
@@ -136,14 +134,6 @@ def GetCustomActions(
             actions.append(CurrentShell.Commands.AugmentPath(debug_crt_dir))
         else:
             assert False, msvc_version
-
-    # Set the compiler
-    if is_clang:
-        compiler = "clang-cl"
-    else:
-        compiler = "cl"
-
-    actions += [CurrentShell.Commands.Set("CXX", compiler), CurrentShell.Commands.Set("CC", compiler)]
 
     return actions
 

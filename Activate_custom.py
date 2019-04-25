@@ -96,8 +96,6 @@ def GetCustomActions(
         # Initialize the environment
         actions += [
             CurrentShell.Commands.Set("DEVELOPMENT_ENVIRONMENT_CPP_COMPILER_NAME", "MSVC-2017"),
-            CurrentShell.Commands.Set("CXX", "cl"),
-            CurrentShell.Commands.Set("CC", "cl"),
         ]
 
         # Add the compiler tools

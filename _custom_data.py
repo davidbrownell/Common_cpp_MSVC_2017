@@ -27,7 +27,7 @@ _script_dir, _script_name                   = os.path.split(_script_fullpath)
 _CUSTOM_DATA                                = [
     (
         "MSVC - 15.9.7",
-        "1DDA9BD6014CB01EA2D3B7405238146AE1DC3916AB5839B83F542FB3F78D1EBD",
+        "7c5f0c85a44e8aebd3117808894bb18d133ab9b7973a826fec921adfda7378f7",
         [
             "Tools",
             "MSVC",

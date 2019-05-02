@@ -58,9 +58,6 @@ def GetCustomActions(
     cases, this is Bash on Linux systems and Batch or PowerShell on Windows systems.
     """
 
-    if configuration == "Noop":
-        return []
-
     actions = []
 
     # Verify the installed content
@@ -71,70 +68,72 @@ def GetCustomActions(
             ),
         )
     else:
-        # Verify installations
-        for name, version, path_parts in _CUSTOM_DATA:
-            this_dir = os.path.join(*([_script_dir] + path_parts))
-            assert os.path.isdir(this_dir), this_dir
+        if CurrentShell.CategoryName == "Windows":
+            # Verify installations
+            for name, version, path_parts in _CUSTOM_DATA:
+                this_dir = os.path.join(*([_script_dir] + path_parts))
+                assert os.path.isdir(this_dir), this_dir
 
-            actions += [
-                CurrentShell.Commands.Execute(
-                    'python "{script}" Verify "{name}" "{dir}" "{version}"'.format(
-                        script=os.path.join(
-                            os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL"),
-                            "RepositoryBootstrap",
-                            "SetupAndActivate",
-                            "AcquireBinaries.py",
+                actions += [
+                    CurrentShell.Commands.Execute(
+                        'python "{script}" Verify "{name}" "{dir}" "{version}"'.format(
+                            script=os.path.join(
+                                os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL"),
+                                "RepositoryBootstrap",
+                                "SetupAndActivate",
+                                "AcquireBinaries.py",
+                            ),
+                            name=name,
+                            dir=this_dir,
+                            version=version,
                         ),
-                        name=name,
-                        dir=this_dir,
-                        version=version,
                     ),
-                ),
+                ]
+
+        if configuration != "Noop":
+            # Initialize the environment
+            actions += [
+                CurrentShell.Commands.Set("DEVELOPMENT_ENVIRONMENT_CPP_COMPILER_NAME", "MSVC-2017"),
             ]
 
-        # Initialize the environment
-        actions += [
-            CurrentShell.Commands.Set("DEVELOPMENT_ENVIRONMENT_CPP_COMPILER_NAME", "MSVC-2017"),
-        ]
-
-        # Add the compiler tools
-        msvc_dir = ActivationActivity.GetVersionedDirectory(
-            version_specs.Tools,
-            _script_dir,
-            "Tools",
-            "MSVC",
-        )
-        assert os.path.isdir(msvc_dir), msvc_dir
-
-        vcvarsall_filename = os.path.join(msvc_dir, "VC", "Auxiliary", "Build", "vcvarsall.bat")
-        assert os.path.isfile(vcvarsall_filename), vcvarsall_filename
-
-        actions += [
-            CurrentShell.Commands.Message(""),
-            CurrentShell.Commands.Call('"{}" {}'.format(vcvarsall_filename, configuration)),
-            CurrentShell.Commands.Message(""),
-        ]
-
-        # Add the debug CRT to the path since it isn't there by default
-        msvc_version = os.path.dirname(msvc_dir)        # Remove the OS
-        msvc_version = os.path.basename(msvc_version)
-
-        if msvc_version == "v15.9.7":
-            debug_crt_dir = os.path.join(
-                msvc_dir,
-                "VC",
-                "Redist",
+            # Add the compiler tools
+            msvc_dir = ActivationActivity.GetVersionedDirectory(
+                version_specs.Tools,
+                _script_dir,
+                "Tools",
                 "MSVC",
-                "14.16.27012",
-                "debug_nonredist",
-                configuration,
-                "Microsoft.VC141.DebugCRT",
             )
-            assert os.path.isdir(debug_crt_dir), debug_crt_dir
+            assert os.path.isdir(msvc_dir), msvc_dir
 
-            actions.append(CurrentShell.Commands.AugmentPath(debug_crt_dir))
-        else:
-            assert False, msvc_version
+            vcvarsall_filename = os.path.join(msvc_dir, "VC", "Auxiliary", "Build", "vcvarsall.bat")
+            assert os.path.isfile(vcvarsall_filename), vcvarsall_filename
+
+            actions += [
+                CurrentShell.Commands.Message(""),
+                CurrentShell.Commands.Call('"{}" {}'.format(vcvarsall_filename, configuration)),
+                CurrentShell.Commands.Message(""),
+            ]
+
+            # Add the debug CRT to the path since it isn't there by default
+            msvc_version = os.path.dirname(msvc_dir)        # Remove the OS
+            msvc_version = os.path.basename(msvc_version)
+
+            if msvc_version == "v15.9.7":
+                debug_crt_dir = os.path.join(
+                    msvc_dir,
+                    "VC",
+                    "Redist",
+                    "MSVC",
+                    "14.16.27012",
+                    "debug_nonredist",
+                    configuration,
+                    "Microsoft.VC141.DebugCRT",
+                )
+                assert os.path.isdir(debug_crt_dir), debug_crt_dir
+
+                actions.append(CurrentShell.Commands.AugmentPath(debug_crt_dir))
+            else:
+                assert False, msvc_version
 
     return actions
 

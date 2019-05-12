@@ -97,7 +97,7 @@ def GetCustomActions(
             ]
 
             # Add the compiler tools
-            msvc_dir = ActivationActivity.GetVersionedDirectory(
+            msvc_dir, msvc_version = ActivationActivity.GetVersionedDirectoryEx(
                 version_specs.Tools,
                 _script_dir,
                 "Tools",
@@ -115,9 +115,6 @@ def GetCustomActions(
             ]
 
             # Add the debug CRT to the path since it isn't there by default
-            msvc_version = os.path.dirname(msvc_dir)        # Remove the OS
-            msvc_version = os.path.basename(msvc_version)
-
             if msvc_version == "v15.9.7":
                 debug_crt_dir = os.path.join(
                     msvc_dir,

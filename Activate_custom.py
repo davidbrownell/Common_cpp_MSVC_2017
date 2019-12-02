@@ -16,6 +16,8 @@
 
 import os
 import sys
+import textwrap
+import uuid
 
 sys.path.insert(0, os.getenv("DEVELOPMENT_ENVIRONMENT_FUNDAMENTAL"))
 from RepositoryBootstrap.SetupAndActivate import CommonEnvironment, CurrentShell
@@ -64,7 +66,9 @@ def GetCustomActions(
     if fast:
         actions.append(
             CurrentShell.Commands.Message(
-                "** FAST: Activating without verifying content. ({})".format(_script_fullpath),
+                "** FAST: Activating without verifying content. ({})".format(
+                    _script_fullpath,
+                ),
             ),
         )
     else:
@@ -93,7 +97,10 @@ def GetCustomActions(
         if configuration != "noop":
             # Initialize the environment
             actions += [
-                CurrentShell.Commands.Set("DEVELOPMENT_ENVIRONMENT_CPP_COMPILER_NAME", "MSVC-2017"),
+                CurrentShell.Commands.Set(
+                    "DEVELOPMENT_ENVIRONMENT_CPP_COMPILER_NAME",
+                    "MSVC-2017",
+                ),
             ]
 
             # Add the compiler tools
@@ -105,13 +112,39 @@ def GetCustomActions(
             )
             assert os.path.isdir(msvc_dir), msvc_dir
 
-            vcvarsall_filename = os.path.join(msvc_dir, "VC", "Auxiliary", "Build", "vcvarsall.bat")
+            vcvarsall_filename = os.path.join(
+                msvc_dir,
+                "VC",
+                "Auxiliary",
+                "Build",
+                "vcvarsall.bat",
+            )
             assert os.path.isfile(vcvarsall_filename), vcvarsall_filename
 
             actions += [
                 CurrentShell.Commands.Message(""),
-                CurrentShell.Commands.Call('"{}" {}'.format(vcvarsall_filename, configuration)),
+                CurrentShell.Commands.Call(
+                    '"{}" {}'.format(vcvarsall_filename, configuration),
+                ),
                 CurrentShell.Commands.Message(""),
+            ]
+
+            # Set CXX and CC
+            temp_filename = "{}.txt".format(str(uuid.uuid4()).replace("-", ""))
+
+            actions += [
+                CurrentShell.Commands.Raw(
+                    textwrap.dedent(
+                        """\
+                        where cl.exe > "{filename}"
+                        set /p CXX= < "{filename}"
+                        set CC=%CXX%
+                        del "{filename}"
+                        """,
+                    ).format(
+                        filename=temp_filename,
+                    ),
+                ),
             ]
 
             # Add the debug CRT to the path since it isn't there by default
